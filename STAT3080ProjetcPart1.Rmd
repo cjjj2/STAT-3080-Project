@@ -1,0 +1,115 @@
+---
+title: "Project Part 1" 
+author: "Christian Min, Mackenzie Fox, Shiloh Gelnett"
+date: "2025-11-04"
+fontsize: 12pt
+geometry: margin=1in
+urlcolor: black
+output: pdf_document
+header-includes:
+- \usepackage{setspace}
+- \onehalfspacing
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, highlight=FALSE)
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+library(readr)
+library(dplyr)
+library(knitr)
+library(tidyr)
+library(tidyverse)
+library(ggplot2)
+library(scales)
+
+cal <- read.csv("cal.csv")
+
+cal2 <- cal %>%
+  transmute(
+    Workout_Type = factor(Workout_Type),
+    Calories     = Calories_Burned,
+    Duration_h   = `Session_Duration..hours.` 
+  ) %>%
+  drop_na(Workout_Type, Calories)
+
+cal2 <- cal2 %>%
+  mutate(Workout_Type = fct_reorder(Workout_Type, Calories, .fun = mean, .na_rm = TRUE))
+
+```
+
+### Introduction
+The number of calories burned during a workout session is an important factor to measure to determine the intensity of a workout and to help achieve weight loss goals. There are various factors that can impact the number of calories burned in a workout session, such as the duration of the session, body composition, and genetics. In this research project we are looking to determine if different types of workouts impact the average number of calories burned in an exercise session. If we are able to determine if various workout types impact the average number of calories burned, this can assist in finding an ideal workout session/type based on the goal number of calories burned to help gym goers achieve their fitness goals. 
+
+Our research question is: 
+Does workout type lead to differences in the average number of calories burned per session?
+
+### Data Summary
+The data represents a sample of 20,000 people. We are unsure about how the data was selected and collected, along with any data modifications that occurred after collection as this data set comes from Kaggle.
+
+Some potential issues with this data include that there may be variation in workout type and intensity between males and females. Males may prefer more intensive workout types which can increase the average number of calories burned or vice versa. This could lead us to believe that there are gender differences in calories burned, when in reality workout preferences differ by gender. Another issue is that the number of calories burned data is right skewed which would make the test unreliable. We would potentially need to log transform the data to make it more reliable. 
+
+This data is appropriate to answer this research question because it contains a large sample size of the number of calories burned per workout session and the data is split evenly between men and women. The data also contains a diverse number of different workouts completed across many different ages and levels of exercises which provides variability in the data. Lastly, we were given numerous other variables relating to attributes of the person and the workout that can help to control for confounding variables.
+
+### Exploratory Data Analysis
+```{r, echo=FALSE}
+### Numerical Summary 1, describing mean, standard deviation, and count
+summary_mean_sd <- cal2 %>%
+  group_by(Workout_Type) %>%
+  summarize(
+    mean_cal = mean(Calories),
+    sd_cal   = sd(Calories),
+    n        = n(),
+    .groups = "drop"
+  )
+summary_mean_sd
+
+### Numerical 
+summary_med_iqr <- cal2 %>%
+  group_by(Workout_Type) %>%
+  summarize(
+    median_cal = median(Calories),
+    iqr_cal    = IQR(Calories),
+    .groups = "drop"
+  )
+summary_med_iqr
+
+ggplot(cal2, aes(x = Workout_Type, y = Calories, fill = Workout_Type)) +
+  geom_boxplot(width = 0.7, alpha = 0.85, outlier.alpha = 0.35) +
+  labs(
+    title = "Calories Burned by Workout Type",
+    x = "Workout Type",
+    y = "Calories Burned"
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(legend.position = "none")
+
+ggplot(summary_mean_sd, aes(x = Workout_Type, y = mean_cal, fill = Workout_Type)) +
+  geom_col(alpha = 0.9) +
+  geom_errorbar(aes(ymin = mean_cal - sd_cal, ymax = mean_cal + sd_cal), width = 0.2) +
+  labs(
+    title = "Average Calories by Workout Type (±1 SD)",
+    x = "Workout Type",
+    y = "Mean Calories Burned"
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(legend.position = "none")
+```
+
+### Conclusion
+For our first numerical/graphical summary, we examined the mean, standard deviation, and the counts for each workout type . We can see that HIIT workouts have the highest calories burned (1652.5) as well as the highest standard deviation (535.9), while yoga has the lowest mean calories burned (897.1) and the lowest standard deviation (290.9). From this we conclude that on average you burn more calories from a HIIT workout, but because the SD is the highest, this means there is the highest variability for this workout also. This pattern implies that HIIT workout sessions are both the most calorie-intensive and the most variable. The large spread in HIIT could be because this type of workout depends the most on intensity, interval length, and rest duration, all of which differ significantly between different individuals and workout programs. For our next numerical/graphical summary, we see the same ranking in workout types versus calories burned: HIIT, strength, cardio, then yoga. However, in this summary we see that the median calories burned for all of the workout types are less than the mean. This means that for all workout types, there are upward outliers that are dragging the mean up. The highest difference between the mean and the median are HIIT workouts, with a spread of 43, most likely because of more intense or longer workout sessions. 
+
+Both the numerical and graphical summaries imply systematic differences in calorie burn across workout types, with greater variability linked to higher-intensity formats. In practical terms, these observations imply that choosing HIIT generally yields higher energy burn, but results depend greatly on how intensely the session is performed. On the other hand, yoga provides more predictable but lower calorie output.
+
+Overall, our exploratory analysis supports the conclusion that workout type is a meaningful factor of calories burned, with intensity driving both the level and variability of energy expenditure.
+
+\newpage
+
+## References
+
+https://www.kaggle.com/datasets/jockeroika/life-style-data?resource=download
+https://www.menshealth.com/fitness/a25424850/best-hiit-exercises-workout/
+https://health.clevelandclinic.org/what-exercise-burns-the-most-calories
+https://www.careinsurance.com/blog/health-insurance-articles/benefits-and-ways-of-burning-calories-for-good-health 
+https://github.com/cjjj2/STAT-3080-Project
